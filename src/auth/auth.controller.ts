@@ -27,7 +27,7 @@ export class SignedUpController {
   async createUser(
     @Body()
     SignUp: userSignUpDTO,
-  ): Promise<{ token: string | any }> {
+  ): Promise<{ token: string }> {
     return this.authService.signUpUser(SignUp);
   }
   @Get('/login')
