@@ -17,31 +17,73 @@ const common_1 = require("@nestjs/common");
 const jwt_1 = require("@nestjs/jwt");
 const mongoose_1 = require("@nestjs/mongoose");
 const mongoose = require("mongoose");
-const user_model_1 = require("../user/user.model");
 const auth_schema_1 = require("./schema/auth.schema");
+const bcrypt = require("bcryptjs");
 let AuthService = class AuthService {
-    constructor(userModel, jwtService, signupModel) {
-        this.userModel = userModel;
+    constructor(jwtService, UserModel) {
         this.jwtService = jwtService;
-        this.signupModel = signupModel;
+        this.UserModel = UserModel;
+    }
+    async signUpUser(userSignUpDTO) {
+        const { name, email, password, phoneNumber, gender } = userSignUpDTO;
+        const hashedPassword = await bcrypt.hash(password, 10);
+        try {
+            const user = await this.UserModel.create({
+                name,
+                email,
+                password: hashedPassword,
+                phoneNumber,
+                gender,
+                role: userSignUpDTO.role,
+            });
+            const token = this.jwtService.sign({
+                id: user._id,
+                name: user.name,
+                email: user.email,
+                phoneNumber: user.phoneNumber,
+                role: user.Role,
+            });
+            return { token };
+        }
+        catch (error) {
+            if (error.code === 11000) {
+                throw new common_1.ConflictException('Email already exists');
+            }
+            throw error;
+        }
+    }
+    async loginUser(userLoginDTO) {
+        const { email, password } = userLoginDTO;
+        const user = await this.UserModel.findOne({ email });
+        if (!user) {
+            throw new common_1.UnauthorizedException('Email not found! Please SignUp first');
+        }
+        const pass = await bcrypt.compare(password, user.password);
+        if (!pass) {
+            throw new common_1.UnauthorizedException('Password is Incorrect! Please Retry');
+        }
+        const token = this.jwtService.sign({
+            id: user._id,
+            name: user.name,
+            email: user.email,
+            phoneNumber: user.phoneNumber,
+            role: user.Role,
+        });
+        return { token };
     }
     async findall() {
-        const usER = await this.signupModel.find();
+        const usER = await this.UserModel.find();
         return usER;
     }
-    async createuser(SignUp) {
-        const res = await this.signupModel.create(SignUp);
-        return res;
-    }
     async findbyid(id) {
-        const res = await this.signupModel.findById(id);
+        const res = await this.UserModel.findById(id);
         if (!res) {
             throw new common_1.NotFoundException('book not found');
         }
         return res;
     }
-    async findbyidandupdate(id, signup) {
-        const res = await this.signupModel.findByIdAndUpdate(id, signup, {
+    async findbyidandupdate(id, User) {
+        const res = await this.UserModel.findByIdAndUpdate(id, User, {
             new: true,
             runValidators: true,
         });
@@ -51,32 +93,17 @@ let AuthService = class AuthService {
         return res;
     }
     async findbyidanddelete(id) {
-        const res = await this.signupModel.findByIdAndDelete(id);
+        const res = await this.UserModel.findByIdAndDelete(id);
         if (!res) {
             throw new common_1.NotFoundException('id not found');
         }
         return res;
     }
-    async registerUser(username, password) {
-        const user = new this.userModel({ username, password });
-        return user.save();
-    }
-    async loginUser(username, password) {
-        const user = await this.userModel.findOne({ username });
-        if (user && user.comparePassword(password)) {
-            const payload = { username: user.username, sub: user._id };
-            const accessToken = this.jwtService.sign(payload, { expiresIn: '60m' });
-            const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
-            return { accessToken, refreshToken };
-        }
-        return null;
-    }
 };
 exports.AuthService = AuthService;
 exports.AuthService = AuthService = __decorate([
     (0, common_1.Injectable)(),
-    __param(0, (0, mongoose_1.InjectModel)(user_model_1.User.name)),
-    __param(2, (0, mongoose_1.InjectModel)(auth_schema_1.SignUp.name)),
-    __metadata("design:paramtypes", [mongoose.Model, jwt_1.JwtService, mongoose.Model])
+    __param(1, (0, mongoose_1.InjectModel)(auth_schema_1.User.name)),
+    __metadata("design:paramtypes", [jwt_1.JwtService, mongoose.Model])
 ], AuthService);
 //# sourceMappingURL=auth.service.js.map

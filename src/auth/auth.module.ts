@@ -2,17 +2,18 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AuthService } from './auth.service';
-import { AuthController } from './auth.controller';
-import { User, UserSchema } from '../user/user.model';
+// import { AuthController } from './auth.controller';
+// import { User, UserSchema } from '../user/user.model';
 import { JwtModule } from '@nestjs/jwt';
 import { SignedUpController } from './auth.controller';
-import { SignUp, signupSchema } from './schema/auth.schema';
+import { User, UserSchema } from './schema/auth.schema';
 import { PassportModule } from '@nestjs/passport';
 import { ConfigService } from '@nestjs/config';
+import { jwtStrategy } from './jwt.strategy';
 @Module({
   imports: [
     PassportModule.register({ defaultStrategy: 'jwt' }),
-    MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
+    // MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
     JwtModule.registerAsync({
       inject: [ConfigService],
       useFactory: (config: ConfigService) => {
@@ -22,9 +23,11 @@ import { ConfigService } from '@nestjs/config';
         };
       },
     }),
-    MongooseModule.forFeature([{ name: 'SignUp', schema: signupSchema }]),
+    MongooseModule.forFeature([{ name: 'User', schema: UserSchema }]),
   ],
-  controllers: [AuthController, SignedUpController],
-  providers: [AuthService],
+  controllers: [SignedUpController],
+  //   controllers: [AuthController, SignedUpController],
+  providers: [AuthService, jwtStrategy],
+  exports: [jwtStrategy, PassportModule],
 })
 export class AuthModule {}

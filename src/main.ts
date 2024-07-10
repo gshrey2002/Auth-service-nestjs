@@ -19,11 +19,12 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { Transport } from '@nestjs/microservices';
+import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
   // Create the HTTP server
   const app = await NestFactory.create(AppModule);
-
+  app.useGlobalPipes(new ValidationPipe());
   // Set the HTTP server to listen on a specific port (default is 3000)
   const httpPort = process.env.PORT || 3000;
   await app.listen(httpPort);

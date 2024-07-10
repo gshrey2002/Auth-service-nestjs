@@ -4,26 +4,35 @@ export enum gender {
   Male = 'male',
   Female = 'female',
 }
+export enum role {
+  Reader = 'reader',
+  Poster = 'Poster',
+}
 
 @Schema({
   timestamps: true,
 })
-export class SignUp {
+export class User {
   @Prop({ required: true })
   name: string;
 
   @Prop({ required: true })
   phoneNumber: number;
 
-  @Prop({ unique: [true, 'duplicate Email address'] })
-  @Prop({ required: true })
+  // @Prop({ unique: [true, 'duplicate Email address'] })
+  // @Prop({ required: true })
+  // email: string;
+  @Prop({ unique: true, required: true })
   email: string;
 
   @Prop({ required: true })
   password: string;
 
-  @Prop({ required: true, enum: gender })
+  @Prop({ enum: gender })
   Gender: gender;
+
+  @Prop({ enum: role, default: role.Reader })
+  Role: role;
 }
 
-export const signupSchema = SchemaFactory.createForClass(SignUp);
+export const UserSchema = SchemaFactory.createForClass(User);

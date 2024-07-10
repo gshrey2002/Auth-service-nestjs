@@ -9,40 +9,49 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.signupSchema = exports.SignUp = exports.gender = void 0;
+exports.UserSchema = exports.User = exports.role = exports.gender = void 0;
 const mongoose_1 = require("@nestjs/mongoose");
 var gender;
 (function (gender) {
     gender["Male"] = "male";
     gender["Female"] = "female";
 })(gender || (exports.gender = gender = {}));
-let SignUp = class SignUp {
+var role;
+(function (role) {
+    role["Reader"] = "reader";
+    role["Poster"] = "Poster";
+})(role || (exports.role = role = {}));
+let User = class User {
 };
-exports.SignUp = SignUp;
+exports.User = User;
 __decorate([
     (0, mongoose_1.Prop)({ required: true }),
     __metadata("design:type", String)
-], SignUp.prototype, "name", void 0);
+], User.prototype, "name", void 0);
 __decorate([
     (0, mongoose_1.Prop)({ required: true }),
     __metadata("design:type", Number)
-], SignUp.prototype, "phoneNumber", void 0);
+], User.prototype, "phoneNumber", void 0);
 __decorate([
-    (0, mongoose_1.Prop)({ unique: [true, 'duplicate Email address'] }),
+    (0, mongoose_1.Prop)({ unique: true, required: true }),
     __metadata("design:type", String)
-], SignUp.prototype, "email", void 0);
+], User.prototype, "email", void 0);
 __decorate([
     (0, mongoose_1.Prop)({ required: true }),
     __metadata("design:type", String)
-], SignUp.prototype, "password", void 0);
+], User.prototype, "password", void 0);
 __decorate([
-    (0, mongoose_1.Prop)({ required: true, enum: gender }),
+    (0, mongoose_1.Prop)({ enum: gender }),
     __metadata("design:type", String)
-], SignUp.prototype, "Gender", void 0);
-exports.SignUp = SignUp = __decorate([
+], User.prototype, "Gender", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ enum: role, default: role.Reader }),
+    __metadata("design:type", String)
+], User.prototype, "Role", void 0);
+exports.User = User = __decorate([
     (0, mongoose_1.Schema)({
         timestamps: true,
     })
-], SignUp);
-exports.signupSchema = mongoose_1.SchemaFactory.createForClass(SignUp);
+], User);
+exports.UserSchema = mongoose_1.SchemaFactory.createForClass(User);
 //# sourceMappingURL=auth.schema.js.map

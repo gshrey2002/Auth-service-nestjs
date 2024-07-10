@@ -10,26 +10,33 @@ exports.AuthModule = void 0;
 const common_1 = require("@nestjs/common");
 const mongoose_1 = require("@nestjs/mongoose");
 const auth_service_1 = require("./auth.service");
-const auth_controller_1 = require("./auth.controller");
-const user_model_1 = require("../user/user.model");
 const jwt_1 = require("@nestjs/jwt");
-const auth_controller_2 = require("./auth.controller");
+const auth_controller_1 = require("./auth.controller");
 const auth_schema_1 = require("./schema/auth.schema");
+const passport_1 = require("@nestjs/passport");
+const config_1 = require("@nestjs/config");
+const jwt_strategy_1 = require("./jwt.strategy");
 let AuthModule = class AuthModule {
 };
 exports.AuthModule = AuthModule;
 exports.AuthModule = AuthModule = __decorate([
     (0, common_1.Module)({
         imports: [
-            mongoose_1.MongooseModule.forFeature([{ name: user_model_1.User.name, schema: user_model_1.UserSchema }]),
-            jwt_1.JwtModule.register({
-                secret: process.env.JWT_SECRET,
-                signOptions: { expiresIn: '60m' },
+            passport_1.PassportModule.register({ defaultStrategy: 'jwt' }),
+            jwt_1.JwtModule.registerAsync({
+                inject: [config_1.ConfigService],
+                useFactory: (config) => {
+                    return {
+                        secret: config.get('JWT_SECRET'),
+                        expire: config.get('JWT_EXPIRE'),
+                    };
+                },
             }),
-            mongoose_1.MongooseModule.forFeature([{ name: 'SignUp', schema: auth_schema_1.signupSchema }]),
+            mongoose_1.MongooseModule.forFeature([{ name: 'User', schema: auth_schema_1.UserSchema }]),
         ],
-        controllers: [auth_controller_1.AuthController, auth_controller_2.SignedUpController],
-        providers: [auth_service_1.AuthService],
+        controllers: [auth_controller_1.SignedUpController],
+        providers: [auth_service_1.AuthService, jwt_strategy_1.jwtStrategy],
+        exports: [jwt_strategy_1.jwtStrategy, passport_1.PassportModule],
     })
 ], AuthModule);
 //# sourceMappingURL=auth.module.js.map

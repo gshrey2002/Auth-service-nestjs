@@ -1,40 +1,18 @@
 import { AuthService } from './auth.service';
-import { SignUp } from './schema/auth.schema';
+import { User } from './schema/auth.schema';
 import { userSignUpDTO } from './dto/user-signup.dto';
+import { userLoginDTO } from './dto/user-create.dto';
 export declare class SignedUpController {
     private authService;
     constructor(authService: AuthService);
-    userFindAll(): Promise<SignUp[]>;
-    createUser(SignUp: userSignUpDTO): Promise<SignUp>;
-    findbyid(id: string): Promise<SignUp>;
-    updateUser(id: string, SignUp: userSignUpDTO): Promise<SignUp>;
-    deleteUser(id: string): Promise<SignUp>;
-}
-export declare class AuthController {
-    private readonly authService;
-    constructor(authService: AuthService);
-    registerUser(data: any): Promise<{
-        code: string;
-        status: number;
-        message: string;
-        data: {
-            user: import("../user/user.model").IUser;
-        };
+    userFindAll(): Promise<User[]>;
+    createUser(SignUp: userSignUpDTO): Promise<{
+        token: string | any;
     }>;
-    loginUser(data: any): Promise<{
-        code: string;
-        status: number;
-        message: string;
-        data: {
-            tokens: {
-                accessToken: string;
-                refreshToken: string;
-            };
-        };
-    } | {
-        code: string;
-        status: number;
-        message: string;
-        data?: undefined;
+    loginUser(login: userLoginDTO): Promise<{
+        token: string;
     }>;
+    findbyid(id: string): Promise<User>;
+    updateUser(id: string, SignUp: userSignUpDTO): Promise<User>;
+    deleteUser(id: string): Promise<User>;
 }
