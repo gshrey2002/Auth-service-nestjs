@@ -31,12 +31,12 @@ async function bootstrap() {
   console.log(`HTTP server is running on port ${httpPort}`);
 
   // Create the NATS microservice
-  const microservice = app.connectMicroservice({
-    transport: Transport.NATS,
-    options: {
-      url: 'nats://localhost:4222', // Replace with your NATS server URL
-    },
-  });
+  // const microservice = app.connectMicroservice({
+  //   transport: Transport.NATS,
+  //   options: {
+  //     url: 'nats://localhost:4222', // Replace with your NATS server URL
+  //   },
+  // });
 
   // Start the microservice
   await app.startAllMicroservices();

@@ -15,4 +15,5 @@ export declare class SignedUpController {
     findbyid(id: string): Promise<User>;
     updateUser(id: string, SignUp: userSignUpDTO): Promise<User>;
     deleteUser(id: string): Promise<User>;
+    validateToken(token: string): Promise<User>;
 }

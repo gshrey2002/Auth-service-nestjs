@@ -39,6 +39,13 @@ let SignedUpController = class SignedUpController {
     async deleteUser(id) {
         return this.authService.findbyidanddelete(id);
     }
+    async validateToken(token) {
+        const user = await this.authService.validateToken(token);
+        if (!user) {
+            throw new common_1.UnauthorizedException('Invalid token');
+        }
+        return user;
+    }
 };
 exports.SignedUpController = SignedUpController;
 __decorate([
@@ -83,6 +90,13 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], SignedUpController.prototype, "deleteUser", null);
+__decorate([
+    (0, common_1.Post)('validate'),
+    __param(0, (0, common_1.Body)('token')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], SignedUpController.prototype, "validateToken", null);
 exports.SignedUpController = SignedUpController = __decorate([
     (0, common_1.Controller)('auth'),
     __metadata("design:paramtypes", [auth_service_1.AuthService])

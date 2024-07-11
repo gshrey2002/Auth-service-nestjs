@@ -8,6 +8,7 @@ import {
   Param,
   Post,
   Put,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { MessagePattern } from '@nestjs/microservices';
 import { AuthService } from './auth.service';
@@ -27,7 +28,8 @@ export class SignedUpController {
   async createUser(
     @Body()
     SignUp: userSignUpDTO,
-  ): Promise<{ token: string }> {
+  ): Promise<{ token: string | any }> {
+    // ): Promise< User[] > {
     return this.authService.signUpUser(SignUp);
   }
   @Get('/login')
@@ -63,6 +65,18 @@ export class SignedUpController {
   ): Promise<User> {
     return this.authService.findbyidanddelete(id);
   }
+
+  // validate token route
+  @Post('validate')
+  async validateToken(@Body('token') token: string) {
+    const user = await this.authService.validateToken(token);
+    if (!user) {
+      throw new UnauthorizedException('Invalid token');
+    }
+    return user;
+  }
+
+  // validate token end
 }
 // @Controller()
 // export class AuthController {

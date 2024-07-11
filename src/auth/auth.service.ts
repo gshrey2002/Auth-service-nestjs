@@ -12,6 +12,7 @@ import * as mongoose from 'mongoose';
 import { User } from './schema/auth.schema';
 import * as bcrypt from 'bcryptjs';
 import { ExceptionsHandler } from '@nestjs/core/exceptions/exceptions-handler';
+import { log } from 'console';
 
 @Injectable()
 export class AuthService {
@@ -44,7 +45,22 @@ export class AuthService {
         role: user.Role,
       });
 
+      // const response = {
+      //   data: {
+      //     user: {
+      //       _id: mongoose.Types.ObjectId,
+      //       email: user.email,
+      //       name: user.name,
+      //       roles: user.Role,
+      //     },
+      //     tokens: {
+      //       accessToken: token,
+      //     },
+      //   },
+      // };
+
       return { token };
+      // return { token };
     } catch (error) {
       if (error.code === 11000) {
         throw new ConflictException('Email already exists');
@@ -125,4 +141,22 @@ export class AuthService {
   //   }
   //   return null;
   // }
+
+  // validation of token
+
+  async validateToken(token: string): Promise<User> {
+    try {
+      // const payload = this.jwtService.verify(token, {
+      const payload = this.jwtService.verify(token, {
+        secret: process.env.JWT_SECRET,
+      });
+      console.log(payload.id);
+
+      return this.UserModel.findById(payload.id);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // validation of token end
 }

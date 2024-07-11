@@ -15,4 +15,5 @@ export declare class AuthService {
     findbyid(id: string): Promise<User>;
     findbyidandupdate(id: string, User: User): Promise<User>;
     findbyidanddelete(id: string): Promise<User>;
+    validateToken(token: string): Promise<User>;
 }

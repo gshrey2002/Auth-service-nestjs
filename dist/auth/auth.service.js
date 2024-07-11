@@ -99,6 +99,18 @@ let AuthService = class AuthService {
         }
         return res;
     }
+    async validateToken(token) {
+        try {
+            const payload = this.jwtService.verify(token, {
+                secret: process.env.JWT_SECRET,
+            });
+            console.log(payload.id);
+            return this.UserModel.findById(payload.id);
+        }
+        catch (e) {
+            return null;
+        }
+    }
 };
 exports.AuthService = AuthService;
 exports.AuthService = AuthService = __decorate([
