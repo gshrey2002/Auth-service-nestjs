@@ -6,4 +6,5 @@ export declare class userSignUpDTO {
     readonly password: string;
     readonly Gender: gender;
     readonly Role: role;
+    readonly refreshToken: any;
 }

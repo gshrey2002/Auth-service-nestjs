@@ -16,6 +16,8 @@ const auth_schema_1 = require("./schema/auth.schema");
 const passport_1 = require("@nestjs/passport");
 const config_1 = require("@nestjs/config");
 const jwt_strategy_1 = require("./jwt.strategy");
+const refreshToken_strategy_1 = require("./refreshToken.strategy");
+const user_module_1 = require("./user/user.module");
 let AuthModule = class AuthModule {
 };
 exports.AuthModule = AuthModule;
@@ -33,9 +35,10 @@ exports.AuthModule = AuthModule = __decorate([
                 },
             }),
             mongoose_1.MongooseModule.forFeature([{ name: 'User', schema: auth_schema_1.UserSchema }]),
+            user_module_1.UsersModule,
         ],
         controllers: [auth_controller_1.SignedUpController],
-        providers: [auth_service_1.AuthService, jwt_strategy_1.jwtStrategy],
+        providers: [auth_service_1.AuthService, jwt_strategy_1.jwtStrategy, refreshToken_strategy_1.refreshToken],
         exports: [jwt_strategy_1.jwtStrategy, passport_1.PassportModule],
     })
 ], AuthModule);

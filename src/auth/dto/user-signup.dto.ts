@@ -33,4 +33,6 @@ export class userSignUpDTO {
 
   @IsNotEmpty()
   readonly Role: role = role.Reader;
+
+  readonly refreshToken: any;
 }

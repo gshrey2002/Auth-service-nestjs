@@ -19,31 +19,25 @@ const mongoose_1 = require("@nestjs/mongoose");
 const mongoose = require("mongoose");
 const auth_schema_1 = require("./schema/auth.schema");
 const bcrypt = require("bcryptjs");
+const user_service_1 = require("./user/user.service");
 let AuthService = class AuthService {
-    constructor(jwtService, UserModel) {
+    constructor(jwtService, userService, UserModel) {
         this.jwtService = jwtService;
+        this.userService = userService;
         this.UserModel = UserModel;
     }
     async signUpUser(userSignUpDTO) {
-        const { name, email, password, phoneNumber, gender } = userSignUpDTO;
+        const { name, email, password, phoneNumber } = userSignUpDTO;
         const hashedPassword = await bcrypt.hash(password, 10);
         try {
-            const user = await this.UserModel.create({
-                name,
-                email,
+            const usersss = await this.UserModel.create({
+                ...userSignUpDTO,
                 password: hashedPassword,
-                phoneNumber,
-                gender,
-                role: userSignUpDTO.role,
             });
-            const token = this.jwtService.sign({
-                id: user._id,
-                name: user.name,
-                email: user.email,
-                phoneNumber: user.phoneNumber,
-                role: user.Role,
-            });
-            return { token };
+            const tokens = await this.getTokens(usersss.email, usersss._id.toString(), usersss.email, usersss.phoneNumber);
+            console.log('hello');
+            await this.updateRefreshToken(usersss.email, tokens.refreshToken);
+            return tokens;
         }
         catch (error) {
             if (error.code === 11000) {
@@ -51,6 +45,12 @@ let AuthService = class AuthService {
             }
             throw error;
         }
+    }
+    async updateRefreshToken(email, refreshToken) {
+        const updateUserDto = {
+            refreshToken: refreshToken,
+        };
+        await this.userService.update(email, updateUserDto);
     }
     async loginUser(userLoginDTO) {
         const { email, password } = userLoginDTO;
@@ -62,23 +62,22 @@ let AuthService = class AuthService {
         if (!pass) {
             throw new common_1.UnauthorizedException('Password is Incorrect! Please Retry');
         }
-        const token = this.jwtService.sign({
-            id: user._id,
-            name: user.name,
-            email: user.email,
-            phoneNumber: user.phoneNumber,
-            role: user.Role,
-        });
-        return { token };
+        const tokens = await this.getTokens(user._id.toString(), user.name, user.email, user.phoneNumber);
+        await this.updateRefreshToken(user.email, tokens.refreshToken);
+        return tokens;
     }
     async findall() {
         const usER = await this.UserModel.find();
         return usER;
     }
     async findbyid(id) {
+        console.log(`${id} from findbyid`);
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            throw new common_1.BadRequestException('Invalid Id format');
+        }
         const res = await this.UserModel.findById(id);
         if (!res) {
-            throw new common_1.NotFoundException('book not found');
+            throw new common_1.NotFoundException('user not found');
         }
         return res;
     }
@@ -111,11 +110,47 @@ let AuthService = class AuthService {
             return null;
         }
     }
+    async getTokens(id, email, name, phoneNumber) {
+        const [accessToken, refreshToken] = await Promise.all([
+            this.jwtService.signAsync({
+                sub: email,
+                id,
+                name,
+                phoneNumber,
+            }, {
+                secret: process.env.JWT_ACCESS_SECRET,
+                expiresIn: '1m',
+            }),
+            this.jwtService.signAsync({
+                sub: email,
+                id,
+                name,
+                phoneNumber,
+            }, {
+                secret: process.env.JWT_REFRESH_SECRET,
+                expiresIn: '7d',
+            }),
+        ]);
+        return {
+            accessToken,
+            refreshToken,
+        };
+    }
+    async logout(token) {
+        try {
+            await this.userService.removeRefreshToken(token);
+        }
+        catch (error) {
+            console.error('Error during logout:', error);
+            return null;
+        }
+    }
 };
 exports.AuthService = AuthService;
 exports.AuthService = AuthService = __decorate([
     (0, common_1.Injectable)(),
-    __param(1, (0, mongoose_1.InjectModel)(auth_schema_1.User.name)),
-    __metadata("design:paramtypes", [jwt_1.JwtService, mongoose.Model])
+    __param(2, (0, mongoose_1.InjectModel)(auth_schema_1.User.name)),
+    __metadata("design:paramtypes", [jwt_1.JwtService,
+        user_service_1.UsersService, mongoose.Model])
 ], AuthService);
 //# sourceMappingURL=auth.service.js.map

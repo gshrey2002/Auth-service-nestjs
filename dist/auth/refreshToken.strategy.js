@@ -8,39 +8,27 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-var __param = (this && this.__param) || function (paramIndex, decorator) {
-    return function (target, key) { decorator(target, key, paramIndex); }
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.jwtStrategy = void 0;
+exports.refreshToken = void 0;
 const common_1 = require("@nestjs/common");
-const mongoose_1 = require("@nestjs/mongoose");
 const passport_1 = require("@nestjs/passport");
 const passport_jwt_1 = require("passport-jwt");
-const auth_schema_1 = require("./schema/auth.schema");
-const mongoose_2 = require("mongoose");
-let jwtStrategy = class jwtStrategy extends (0, passport_1.PassportStrategy)(passport_jwt_1.Strategy) {
-    constructor(userModel) {
+let refreshToken = class refreshToken extends (0, passport_1.PassportStrategy)(passport_jwt_1.Strategy, 'jwt-refresh') {
+    constructor() {
         super({
             jwtFromRequest: passport_jwt_1.ExtractJwt.fromAuthHeaderAsBearerToken(),
-            ignoreExpiration: false,
-            secretOrKey: process.env.JWT_SECRET,
+            secretOrKey: process.env.JWT_REFRESH_SECRET,
+            passReqToCallback: true,
         });
-        this.userModel = userModel;
     }
-    async validate(payload) {
-        const { id } = payload;
-        const user = await this.userModel.findById(id);
-        if (!user) {
-            throw new common_1.UnauthorizedException('Login First to access this endpoint');
-        }
-        return user;
+    validate(req, payload) {
+        const refreshToken = req.get('Authorization').replace('Bearer', '').trim();
+        return { ...payload, refreshToken };
     }
 };
-exports.jwtStrategy = jwtStrategy;
-exports.jwtStrategy = jwtStrategy = __decorate([
+exports.refreshToken = refreshToken;
+exports.refreshToken = refreshToken = __decorate([
     (0, common_1.Injectable)(),
-    __param(0, (0, mongoose_1.InjectModel)(auth_schema_1.User.name)),
-    __metadata("design:paramtypes", [mongoose_2.Model])
-], jwtStrategy);
-//# sourceMappingURL=jwt.strategy.js.map
+    __metadata("design:paramtypes", [])
+], refreshToken);
+//# sourceMappingURL=refreshToken.strategy.js.map
