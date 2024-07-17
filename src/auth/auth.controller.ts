@@ -21,6 +21,7 @@ import { userSignUpDTO } from './dto/user-signup.dto';
 import { userLoginDTO } from './dto/user-create.dto';
 import { GetToken } from './decorator/get-token.decorator';
 import { AuthGuard } from '@nestjs/passport';
+import { RefreshTokenGuard } from './refresh-token.gaurd';
 
 @Controller('auth')
 export class SignedUpController {
@@ -87,14 +88,14 @@ export class SignedUpController {
   @Get('logout')
   async logout(@Req() req: Request): Promise<{ message: string }> {
     const authHeader = req.headers['authorization'] as string | undefined;
-    console.log('Authorization Header:', authHeader);
+    // console.log('Authorization Header:', authHeader);
 
     if (!authHeader) {
       throw new UnauthorizedException('No authorization header provided');
     }
 
     const token = authHeader.split(' ')[1];
-    console.log('Extracted Token:', token);
+    // console.log('Extracted Token:', token);
 
     if (!token) {
       throw new UnauthorizedException('Invalid authorization header format');
@@ -103,6 +104,20 @@ export class SignedUpController {
     await this.authService.logout(token);
 
     return { message: 'Successfully logged out' };
+  }
+
+  // @UseGuards(RefreshTokenGuard)
+  @Get('refresh')
+  refreshTokens(@Req() req: Request) {
+    // const userId = req.user['sub'];
+    const token = req.headers['refreshtoken'] as string | undefined;
+    if (!token) {
+      throw new UnauthorizedException('No authorization header provided');
+    }
+    const refreshToken = token.split(' ')[1];
+    // console.log(refreshToken);
+
+    return this.authService.refreshTokens(refreshToken);
   }
 
   // @Get('logout')

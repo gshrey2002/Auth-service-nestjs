@@ -49,17 +49,23 @@ let SignedUpController = class SignedUpController {
     }
     async logout(req) {
         const authHeader = req.headers['authorization'];
-        console.log('Authorization Header:', authHeader);
         if (!authHeader) {
             throw new common_1.UnauthorizedException('No authorization header provided');
         }
         const token = authHeader.split(' ')[1];
-        console.log('Extracted Token:', token);
         if (!token) {
             throw new common_1.UnauthorizedException('Invalid authorization header format');
         }
         await this.authService.logout(token);
         return { message: 'Successfully logged out' };
+    }
+    refreshTokens(req) {
+        const token = req.headers['refreshtoken'];
+        if (!token) {
+            throw new common_1.UnauthorizedException('No authorization header provided');
+        }
+        const refreshToken = token.split(' ')[1];
+        return this.authService.refreshTokens(refreshToken);
     }
 };
 exports.SignedUpController = SignedUpController;
@@ -121,6 +127,13 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], SignedUpController.prototype, "logout", null);
+__decorate([
+    (0, common_1.Get)('refresh'),
+    __param(0, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], SignedUpController.prototype, "refreshTokens", null);
 exports.SignedUpController = SignedUpController = __decorate([
     (0, common_1.Controller)('auth'),
     __metadata("design:paramtypes", [auth_service_1.AuthService])

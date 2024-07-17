@@ -5,7 +5,6 @@ const common_1 = require("@nestjs/common");
 exports.GetToken = (0, common_1.createParamDecorator)((data, ctx) => {
     const request = ctx.switchToHttp().getRequest();
     const authHeader = request.headers.authorization;
-    console.log(authHeader);
     if (authHeader && authHeader.startsWith('Bearer ')) {
         return authHeader.split(' ')[1];
     }

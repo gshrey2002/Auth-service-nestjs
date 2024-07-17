@@ -2,6 +2,7 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
   UnauthorizedException,
@@ -77,7 +78,7 @@ export class AuthService {
         usersss.email,
         usersss.phoneNumber,
       );
-      console.log('hello');
+      // console.log('hello');
 
       await this.updateRefreshToken(usersss.email, tokens.refreshToken);
 
@@ -141,7 +142,7 @@ export class AuthService {
   }
 
   async findbyid(id: string): Promise<User> {
-    console.log(`${id} from findbyid`);
+    // console.log(`${id} from findbyid`);
     if (!mongoose.Types.ObjectId.isValid(id)) {
       throw new BadRequestException('Invalid Id format');
     }
@@ -195,7 +196,7 @@ export class AuthService {
       const payload = this.jwtService.verify(token, {
         secret: process.env.JWT_SECRET,
       });
-      console.log(payload.id);
+      // console.log(payload.id);
 
       return this.UserModel.findById(payload.id);
     } catch (e) {
@@ -215,23 +216,23 @@ export class AuthService {
     const [accessToken, refreshToken] = await Promise.all([
       this.jwtService.signAsync(
         {
-          sub: email,
-          id,
           name,
+          id,
+          email,
           // role,
           phoneNumber,
         },
         {
           secret: process.env.JWT_ACCESS_SECRET,
 
-          expiresIn: '1m',
+          expiresIn: '10m',
         },
       ),
       this.jwtService.signAsync(
         {
-          sub: email,
-          id,
           name,
+          id,
+          email,
           // role,
           phoneNumber,
         },
@@ -272,11 +273,38 @@ export class AuthService {
       console.error('Error during logout:', error);
       return null;
     }
+  }
+  extractUserIdFromToken(token: string): string {
+    const decodedToken = this.jwtService.decode(token) as any;
+    // console.log(decodedToken);
 
-    // extractUserIdFromToken(token: string): string {
-    //   const decodedToken = this.jwtService.decode(token) as any;
-    //   console.log(decodedToken);
+    return decodedToken?.id;
+  }
+  async refreshTokens(refreshToken: string) {
+    // const user = await this.Auth.findByid(userId);
+    // try bodam
+    await this.userService.verifyTokenExists(refreshToken);
 
-    //   return decodedToken?.userId;
+    const userId = this.extractUserIdFromToken(refreshToken);
+    // console.log(userId);
+
+    const user = await this.findbyid(userId);
+    // console.log(user);
+    if (!user || !user.refreshToken)
+      throw new ForbiddenException('Access Denied 1');
+    const refreshTokenMatches = user.refreshToken === refreshToken;
+    if (!refreshTokenMatches) throw new ForbiddenException('Access Denied 2');
+    const tokens = await this.getTokens(
+      userId,
+      user.name,
+      user.email,
+      user.phoneNumber,
+    );
+    await this.updateRefreshToken(user.email, tokens.refreshToken);
+    return tokens;
+    // } catch (error) {
+    //   console.error('Error refreshing tokens:', error);
+    //   throw new ForbiddenException('Access Denied 3');
+    // }
   }
 }
