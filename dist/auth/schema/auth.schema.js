@@ -48,6 +48,10 @@ __decorate([
     (0, mongoose_1.Prop)({ enum: role, default: role.Reader }),
     __metadata("design:type", String)
 ], User.prototype, "Role", void 0);
+__decorate([
+    (0, mongoose_1.Prop)(),
+    __metadata("design:type", String)
+], User.prototype, "refreshToken", void 0);
 exports.User = User = __decorate([
     (0, mongoose_1.Schema)({
         timestamps: true,

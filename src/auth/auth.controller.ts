@@ -1,4 +1,6 @@
 // src/auth/auth.controller.ts
+// import { createParamDecorator, ExecutionContext, ExecutionContext, ExecutionContext } from '@nestjs/common';
+import { Request } from 'express';
 import {
   Body,
   Controller,
@@ -8,13 +10,17 @@ import {
   Param,
   Post,
   Put,
+  Req,
   UnauthorizedException,
+  UseGuards,
 } from '@nestjs/common';
 import { MessagePattern } from '@nestjs/microservices';
 import { AuthService } from './auth.service';
 import { User } from './schema/auth.schema';
 import { userSignUpDTO } from './dto/user-signup.dto';
 import { userLoginDTO } from './dto/user-create.dto';
+import { GetToken } from './decorator/get-token.decorator';
+import { AuthGuard } from '@nestjs/passport';
 
 @Controller('auth')
 export class SignedUpController {
@@ -40,7 +46,8 @@ export class SignedUpController {
     return this.authService.loginUser(login);
   }
 
-  @Get(':id')
+  @Get('id/:id')
+  @UseGuards(AuthGuard('jwt'))
   async findbyid(
     @Param('id')
     id: string,
@@ -48,7 +55,7 @@ export class SignedUpController {
     return this.authService.findbyid(id);
   }
 
-  @Put(':id')
+  @Put('id/:id')
   async updateUser(
     @Param('id')
     id: string,
@@ -58,7 +65,8 @@ export class SignedUpController {
     return this.authService.findbyidandupdate(id, SignUp);
   }
 
-  @Delete(':id')
+  @Delete('id/:id')
+  @UseGuards(AuthGuard('jwt'))
   async deleteUser(
     @Param('id')
     id: string,
@@ -76,8 +84,45 @@ export class SignedUpController {
     return user;
   }
 
+  @Get('logout')
+  async logout(@Req() req: Request): Promise<{ message: string }> {
+    const authHeader = req.headers['authorization'] as string | undefined;
+    console.log('Authorization Header:', authHeader);
+
+    if (!authHeader) {
+      throw new UnauthorizedException('No authorization header provided');
+    }
+
+    const token = authHeader.split(' ')[1];
+    console.log('Extracted Token:', token);
+
+    if (!token) {
+      throw new UnauthorizedException('Invalid authorization header format');
+    }
+
+    await this.authService.logout(token);
+
+    return { message: 'Successfully logged out' };
+  }
+
+  // @Get('logout')
+  // logout(@Req() req: Request) {
+  //   this.authService.logout(req.user['sub']);
+  // }
+  // @Get('/logout')
+  // async logout(@GetToken() token: string): Promise<{ message: string }> {
+  //   if (!token) {
+  //     throw new UnauthorizedException('No authorization token provided');
+  //   }
+
+  //   await this.authService.logout(token);
+
+  //   return { message: 'Successfully logged out' };
+  // }
+
   // validate token end
 }
+
 // @Controller()
 // export class AuthController {
 //   constructor(private readonly authService: AuthService) {}

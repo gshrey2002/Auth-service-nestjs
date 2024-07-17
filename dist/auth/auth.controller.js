@@ -17,6 +17,7 @@ const common_1 = require("@nestjs/common");
 const auth_service_1 = require("./auth.service");
 const user_signup_dto_1 = require("./dto/user-signup.dto");
 const user_create_dto_1 = require("./dto/user-create.dto");
+const passport_1 = require("@nestjs/passport");
 let SignedUpController = class SignedUpController {
     constructor(authService) {
         this.authService = authService;
@@ -46,6 +47,20 @@ let SignedUpController = class SignedUpController {
         }
         return user;
     }
+    async logout(req) {
+        const authHeader = req.headers['authorization'];
+        console.log('Authorization Header:', authHeader);
+        if (!authHeader) {
+            throw new common_1.UnauthorizedException('No authorization header provided');
+        }
+        const token = authHeader.split(' ')[1];
+        console.log('Extracted Token:', token);
+        if (!token) {
+            throw new common_1.UnauthorizedException('Invalid authorization header format');
+        }
+        await this.authService.logout(token);
+        return { message: 'Successfully logged out' };
+    }
 };
 exports.SignedUpController = SignedUpController;
 __decorate([
@@ -69,14 +84,15 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], SignedUpController.prototype, "loginUser", null);
 __decorate([
-    (0, common_1.Get)(':id'),
+    (0, common_1.Get)('id/:id'),
+    (0, common_1.UseGuards)((0, passport_1.AuthGuard)('jwt')),
     __param(0, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], SignedUpController.prototype, "findbyid", null);
 __decorate([
-    (0, common_1.Put)(':id'),
+    (0, common_1.Put)('id/:id'),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
@@ -84,7 +100,8 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], SignedUpController.prototype, "updateUser", null);
 __decorate([
-    (0, common_1.Delete)(':id'),
+    (0, common_1.Delete)('id/:id'),
+    (0, common_1.UseGuards)((0, passport_1.AuthGuard)('jwt')),
     __param(0, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
@@ -97,6 +114,13 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], SignedUpController.prototype, "validateToken", null);
+__decorate([
+    (0, common_1.Get)('logout'),
+    __param(0, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], SignedUpController.prototype, "logout", null);
 exports.SignedUpController = SignedUpController = __decorate([
     (0, common_1.Controller)('auth'),
     __metadata("design:paramtypes", [auth_service_1.AuthService])

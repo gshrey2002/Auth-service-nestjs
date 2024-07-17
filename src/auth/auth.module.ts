@@ -10,6 +10,9 @@ import { User, UserSchema } from './schema/auth.schema';
 import { PassportModule } from '@nestjs/passport';
 import { ConfigService } from '@nestjs/config';
 import { jwtStrategy } from './jwt.strategy';
+import { refreshToken } from './refreshToken.strategy';
+import { UsersService } from './user/user.service';
+import { UsersModule } from './user/user.module';
 @Module({
   imports: [
     PassportModule.register({ defaultStrategy: 'jwt' }),
@@ -24,10 +27,11 @@ import { jwtStrategy } from './jwt.strategy';
       },
     }),
     MongooseModule.forFeature([{ name: 'User', schema: UserSchema }]),
+    UsersModule,
   ],
   controllers: [SignedUpController],
   //   controllers: [AuthController, SignedUpController],
-  providers: [AuthService, jwtStrategy],
+  providers: [AuthService, jwtStrategy, refreshToken],
   exports: [jwtStrategy, PassportModule],
 })
 export class AuthModule {}

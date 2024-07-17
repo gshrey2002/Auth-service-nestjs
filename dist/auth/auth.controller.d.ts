@@ -1,3 +1,4 @@
+import { Request } from 'express';
 import { AuthService } from './auth.service';
 import { User } from './schema/auth.schema';
 import { userSignUpDTO } from './dto/user-signup.dto';
@@ -16,4 +17,7 @@ export declare class SignedUpController {
     updateUser(id: string, SignUp: userSignUpDTO): Promise<User>;
     deleteUser(id: string): Promise<User>;
     validateToken(token: string): Promise<User>;
+    logout(req: Request): Promise<{
+        message: string;
+    }>;
 }

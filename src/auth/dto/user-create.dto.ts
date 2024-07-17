@@ -16,4 +16,6 @@ export class userLoginDTO {
   @IsNotEmpty()
   @MinLength(6)
   readonly password: string;
+
+  readonly refreshToken: string;
 }

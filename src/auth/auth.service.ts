@@ -1,5 +1,6 @@
 // src/auth/auth.service.ts
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
@@ -13,37 +14,47 @@ import { User } from './schema/auth.schema';
 import * as bcrypt from 'bcryptjs';
 import { ExceptionsHandler } from '@nestjs/core/exceptions/exceptions-handler';
 import { log } from 'console';
+import { UsersService } from './user/user.service';
+import { userSignUpDTO } from './dto/user-signup.dto';
+import { userLoginDTO } from './dto/user-create.dto';
 
 @Injectable()
 export class AuthService {
   constructor(
     // @InjectModel(User.name) private userModel: mongoose.Model<IUser>,
     private jwtService: JwtService,
+    private userService: UsersService,
 
     @InjectModel(User.name) private UserModel: mongoose.Model<User>,
   ) {}
 
-  async signUpUser(userSignUpDTO): Promise<{ token: string }> {
-    const { name, email, password, phoneNumber, gender } = userSignUpDTO;
+  // async signUpUser(userSignUpDTO): Promise<{ token: string }> {
+  async signUpUser(userSignUpDTO: userSignUpDTO): Promise<any> {
+    const { name, email, password, phoneNumber } = userSignUpDTO;
     const hashedPassword = await bcrypt.hash(password, 10);
 
     try {
-      const user = await this.UserModel.create({
-        name,
-        email,
+      // const user = await this.UserModel.create({
+      //   name,
+      //   email,
+      //   password: hashedPassword,
+      //   phoneNumber,
+      //   gender,
+      //   // role: userSignUpDTO.role,
+      // });
+
+      const usersss = await this.UserModel.create({
+        ...userSignUpDTO,
         password: hashedPassword,
-        phoneNumber,
-        gender,
-        role: userSignUpDTO.role,
       });
 
-      const token = this.jwtService.sign({
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        phoneNumber: user.phoneNumber,
-        role: user.Role,
-      });
+      // const token = this.jwtService.sign({
+      //   id: user._id,
+      //   name: user.name,
+      //   email: user.email,
+      //   phoneNumber: user.phoneNumber,
+      //   role: user.Role,
+      // });
 
       // const response = {
       //   data: {
@@ -59,7 +70,18 @@ export class AuthService {
       //   },
       // };
 
-      return { token };
+      //again code comented
+      const tokens = await this.getTokens(
+        usersss.email,
+        usersss._id.toString(),
+        usersss.email,
+        usersss.phoneNumber,
+      );
+      console.log('hello');
+
+      await this.updateRefreshToken(usersss.email, tokens.refreshToken);
+
+      return tokens;
       // return { token };
     } catch (error) {
       if (error.code === 11000) {
@@ -69,7 +91,17 @@ export class AuthService {
     }
   }
 
-  async loginUser(userLoginDTO): Promise<{ token: string }> {
+  async updateRefreshToken(email: string, refreshToken: string) {
+    // const hashedRefreshToken = await bcrypt.hash(refreshToken, 10);
+
+    const updateUserDto = {
+      refreshToken: refreshToken,
+    };
+    await this.userService.update(email, updateUserDto);
+  }
+
+  async loginUser(userLoginDTO: userLoginDTO): Promise<any> {
+    // async loginUser(userLoginDTO): Promise<{ token: string }> {
     const { email, password } = userLoginDTO;
 
     const user = await this.UserModel.findOne({ email });
@@ -83,15 +115,24 @@ export class AuthService {
     if (!pass) {
       throw new UnauthorizedException('Password is Incorrect! Please Retry');
     }
-    const token = this.jwtService.sign({
-      id: user._id,
-      name: user.name,
-      email: user.email,
-      phoneNumber: user.phoneNumber,
-      role: user.Role,
-    });
 
-    return { token };
+    const tokens = await this.getTokens(
+      user._id.toString(),
+      user.name,
+      user.email,
+      user.phoneNumber,
+    );
+    await this.updateRefreshToken(user.email, tokens.refreshToken);
+    // const token = this.jwtService.sign({
+    //   id: user._id,
+    //   name: user.name,
+    //   email: user.email,
+    //   phoneNumber: user.phoneNumber,
+    //   role: user.Role,
+    // });
+
+    // return { token };
+    return tokens;
   }
   async findall(): Promise<User[]> {
     const usER = await this.UserModel.find();
@@ -100,9 +141,13 @@ export class AuthService {
   }
 
   async findbyid(id: string): Promise<User> {
+    console.log(`${id} from findbyid`);
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      throw new BadRequestException('Invalid Id format');
+    }
     const res = await this.UserModel.findById(id);
     if (!res) {
-      throw new NotFoundException('book not found');
+      throw new NotFoundException('user not found');
     }
     return res;
   }
@@ -159,4 +204,79 @@ export class AuthService {
   }
 
   // validation of token end
+
+  async getTokens(
+    id: string,
+    email: string,
+    name: string,
+    // role: string,
+    phoneNumber: number,
+  ) {
+    const [accessToken, refreshToken] = await Promise.all([
+      this.jwtService.signAsync(
+        {
+          sub: email,
+          id,
+          name,
+          // role,
+          phoneNumber,
+        },
+        {
+          secret: process.env.JWT_ACCESS_SECRET,
+
+          expiresIn: '1m',
+        },
+      ),
+      this.jwtService.signAsync(
+        {
+          sub: email,
+          id,
+          name,
+          // role,
+          phoneNumber,
+        },
+        {
+          secret: process.env.JWT_REFRESH_SECRET,
+          expiresIn: '7d',
+        },
+      ),
+    ]);
+
+    return {
+      accessToken,
+      refreshToken,
+    };
+  }
+
+  // async logout(token: string): Promise<void> {
+  //   console.log('Token received in logout:', token);
+
+  //   const userId = this.extractUserIdFromToken(token);
+  //   console.log(`User ID extracted from token: ${userId}`);
+
+  //   if (!mongoose.Types.ObjectId.isValid(userId)) {
+  //     console.log('Inside if: Invalid ID format');
+  //     throw new BadRequestException('Invalid ID format');
+  //   }
+
+  //   try {
+  //     await this.userService.removeRefreshToken(userId);
+  //   } catch (error) {
+  //     console.error('Error during logout:', error);
+  //   }
+  // }
+  async logout(token: string): Promise<void> {
+    try {
+      await this.userService.removeRefreshToken(token);
+    } catch (error) {
+      console.error('Error during logout:', error);
+      return null;
+    }
+
+    // extractUserIdFromToken(token: string): string {
+    //   const decodedToken = this.jwtService.decode(token) as any;
+    //   console.log(decodedToken);
+
+    //   return decodedToken?.userId;
+  }
 }
