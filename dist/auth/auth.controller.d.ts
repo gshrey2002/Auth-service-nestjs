@@ -20,4 +20,8 @@ export declare class SignedUpController {
     logout(req: Request): Promise<{
         message: string;
     }>;
+    refreshTokens(req: Request): Promise<{
+        accessToken: string;
+        refreshToken: string;
+    }>;
 }

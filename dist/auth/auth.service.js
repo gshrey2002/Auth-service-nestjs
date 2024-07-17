@@ -35,7 +35,6 @@ let AuthService = class AuthService {
                 password: hashedPassword,
             });
             const tokens = await this.getTokens(usersss.email, usersss._id.toString(), usersss.email, usersss.phoneNumber);
-            console.log('hello');
             await this.updateRefreshToken(usersss.email, tokens.refreshToken);
             return tokens;
         }
@@ -71,7 +70,6 @@ let AuthService = class AuthService {
         return usER;
     }
     async findbyid(id) {
-        console.log(`${id} from findbyid`);
         if (!mongoose.Types.ObjectId.isValid(id)) {
             throw new common_1.BadRequestException('Invalid Id format');
         }
@@ -103,7 +101,6 @@ let AuthService = class AuthService {
             const payload = this.jwtService.verify(token, {
                 secret: process.env.JWT_SECRET,
             });
-            console.log(payload.id);
             return this.UserModel.findById(payload.id);
         }
         catch (e) {
@@ -113,18 +110,18 @@ let AuthService = class AuthService {
     async getTokens(id, email, name, phoneNumber) {
         const [accessToken, refreshToken] = await Promise.all([
             this.jwtService.signAsync({
-                sub: email,
-                id,
                 name,
+                id,
+                email,
                 phoneNumber,
             }, {
                 secret: process.env.JWT_ACCESS_SECRET,
-                expiresIn: '1m',
+                expiresIn: '10m',
             }),
             this.jwtService.signAsync({
-                sub: email,
-                id,
                 name,
+                id,
+                email,
                 phoneNumber,
             }, {
                 secret: process.env.JWT_REFRESH_SECRET,
@@ -144,6 +141,23 @@ let AuthService = class AuthService {
             console.error('Error during logout:', error);
             return null;
         }
+    }
+    extractUserIdFromToken(token) {
+        const decodedToken = this.jwtService.decode(token);
+        return decodedToken?.id;
+    }
+    async refreshTokens(refreshToken) {
+        await this.userService.verifyTokenExists(refreshToken);
+        const userId = this.extractUserIdFromToken(refreshToken);
+        const user = await this.findbyid(userId);
+        if (!user || !user.refreshToken)
+            throw new common_1.ForbiddenException('Access Denied 1');
+        const refreshTokenMatches = user.refreshToken === refreshToken;
+        if (!refreshTokenMatches)
+            throw new common_1.ForbiddenException('Access Denied 2');
+        const tokens = await this.getTokens(userId, user.name, user.email, user.phoneNumber);
+        await this.updateRefreshToken(user.email, tokens.refreshToken);
+        return tokens;
     }
 };
 exports.AuthService = AuthService;

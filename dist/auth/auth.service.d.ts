@@ -22,4 +22,9 @@ export declare class AuthService {
         refreshToken: string;
     }>;
     logout(token: string): Promise<void>;
+    extractUserIdFromToken(token: string): string;
+    refreshTokens(refreshToken: string): Promise<{
+        accessToken: string;
+        refreshToken: string;
+    }>;
 }
